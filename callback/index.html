@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ai_Video — connecting TikTok</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <header><img src="/icon.png" alt="Ai_Video"><a class="brand" href="/">Ai_Video</a></header>
+  <div class="card">
+    <h1 id="title">Connecting TikTok…</h1>
+    <p id="msg">Passing the authorization to the Ai_Video uploader on this computer.</p>
+  </div>
+</main>
+<script>
+  // TikTok возвращает сюда ?code=…&state=…  Код передаётся загрузчику на этом же ПК (127.0.0.1),
+  // секрет приложения и токены остаются только на компьютере — на сервер ничего не уходит.
+  const q = new URLSearchParams(location.search);
+  const title = document.getElementById("title"), msg = document.getElementById("msg");
+  if (q.get("error")) {
+    title.innerHTML = "<span class='err'>Not connected</span>";
+    msg.textContent = "TikTok returned: " + (q.get("error_description") || q.get("error"));
+  } else if (q.get("code")) {
+    const port = (q.get("state") || "").split("-")[0];
+    const local = "http://127.0.0.1:" + (/^\d{4,5}$/.test(port) ? port : "8765") + "/callback" + location.search;
+    msg.innerHTML = "Redirecting to the uploader… If nothing happens, make sure it is running and <a href='" + local + "'>click here</a>.";
+    location.replace(local);
+  } else {
+    title.textContent = "Nothing to do";
+    msg.innerHTML = "This page is used after signing in with TikTok. <a href='/'>Back to Ai_Video</a>.";
+  }
+</script>
+</body>
+</html>

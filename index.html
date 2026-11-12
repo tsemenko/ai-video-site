@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ai_Video — send my videos to TikTok drafts</title>
+<meta name="description" content="Ai_Video uploads short vertical videos made on my computer to my own TikTok drafts.">
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <header>
+    <img src="/icon.png" alt="Ai_Video">
+    <a class="brand" href="/">Ai_Video</a>
+    <nav><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav>
+  </header>
+
+  <h1>Send finished short videos to your TikTok drafts</h1>
+  <p>Ai_Video is a small personal tool. I make vertical videos (1080×1920) on my computer.
+     When a video is ready, the Ai_Video uploader sends the MP4 file to my TikTok inbox as a draft.
+     I then open TikTok, write the caption, choose a sound and publish it myself.</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">How it works</h2>
+    <ol class="steps">
+      <li><b>Connect TikTok.</b> Sign in with TikTok (Login Kit) and allow Ai_Video to upload videos to your drafts.</li>
+      <li><b>Upload.</b> The Ai_Video uploader on your computer sends the MP4 file with the Content Posting API (<code>video.upload</code>, file upload).</li>
+      <li><b>Review and post in TikTok.</b> TikTok notifies you in the app inbox. Nothing is published without your action.</li>
+    </ol>
+    <p><a class="btn" id="connect" href="#">Connect TikTok</a></p>
+    <p id="hint" style="font-size:14px">Start the Ai_Video uploader on your computer first — it opens this page with your sign-in link.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">What Ai_Video accesses</h2>
+    <ul>
+      <li><code>user.info.basic</code> — your display name and avatar, to show which account is connected.</li>
+      <li><code>video.upload</code> — to place a video into your TikTok drafts / inbox.</li>
+    </ul>
+    <p>Ai_Video does not read your other videos, messages, followers or analytics, and does not publish anything on your behalf.</p>
+  </div>
+
+  <footer>© 2026 Ai_Video · ai.dachahub.online · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms of Service</a></footer>
+</main>
+<script>
+  // Загрузчик открывает эту страницу как /?auth=<ссылка входа TikTok>; кнопка ведёт по ней.
+  const auth = new URLSearchParams(location.search).get("auth");
+  const btn = document.getElementById("connect"), hint = document.getElementById("hint");
+  if (auth && auth.startsWith("https://www.tiktok.com/")) { btn.href = auth; hint.textContent = "You will be redirected to TikTok to sign in."; }
+  else btn.addEventListener("click", (e) => { e.preventDefault(); hint.innerHTML = "<span class='err'>Start the Ai_Video uploader on your computer — it opens this page with your sign-in link.</span>"; });
+</script>
+</body>
+</html>
