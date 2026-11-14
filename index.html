@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ai_Video — send my videos to TikTok drafts</title>
-<meta name="description" content="Ai_Video uploads short vertical videos made on my computer to my own TikTok drafts.">
+<title>Ai_Video — post my videos to TikTok</title>
+<meta name="description" content="Ai_Video posts short vertical videos made on my computer to my own TikTok account.">
 <link rel="icon" href="/icon.png">
 <link rel="stylesheet" href="/style.css">
 </head>
@@ -16,17 +16,18 @@
     <nav><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav>
   </header>
 
-  <h1>Send finished short videos to your TikTok drafts</h1>
+  <h1>Post finished short videos to your TikTok</h1>
   <p>Ai_Video is a small personal tool. I make vertical videos (1080×1920) on my computer.
-     When a video is ready, the Ai_Video uploader sends the MP4 file to my TikTok inbox as a draft.
-     I then open TikTok, write the caption, choose a sound and publish it myself.</p>
+     When a video is ready, the Ai_Video uploader opens a post screen where I check the video, write the caption
+     and choose who can see it. Only after I press <b>Post</b> the MP4 file is sent to my TikTok profile.
+     Optionally a video can go to my TikTok drafts instead, to finish it in the TikTok app.</p>
 
   <div class="card">
     <h2 style="margin-top:0">How it works</h2>
     <ol class="steps">
-      <li><b>Connect TikTok.</b> Sign in with TikTok (Login Kit) and allow Ai_Video to upload videos to your drafts.</li>
-      <li><b>Upload.</b> The Ai_Video uploader on your computer sends the MP4 file with the Content Posting API (<code>video.upload</code>, file upload).</li>
-      <li><b>Review and post in TikTok.</b> TikTok notifies you in the app inbox. Nothing is published without your action.</li>
+      <li><b>Connect TikTok.</b> Sign in with TikTok (Login Kit) and allow Ai_Video to post videos to your account.</li>
+      <li><b>Review.</b> The post screen shows your account, a preview, the caption, privacy level (you choose it, there is no default), comment / duet / stitch settings and commercial content disclosure.</li>
+      <li><b>Post.</b> When you press Post, the uploader on your computer sends the MP4 with the Content Posting API (<code>video.publish</code>, file upload) and shows the status. Nothing is posted without your action.</li>
     </ol>
     <p><a class="btn" id="connect" href="#">Connect TikTok</a></p>
     <p id="hint" style="font-size:14px">Start the Ai_Video uploader on your computer first — it opens this page with your sign-in link.</p>
@@ -36,9 +37,10 @@
     <h2 style="margin-top:0">What Ai_Video accesses</h2>
     <ul>
       <li><code>user.info.basic</code> — your display name and avatar, to show which account is connected.</li>
-      <li><code>video.upload</code> — to place a video into your TikTok drafts / inbox.</li>
+      <li><code>video.publish</code> — to post a video you approved on the post screen to your profile.</li>
+      <li><code>video.upload</code> — optional: to place a video into your TikTok drafts / inbox instead.</li>
     </ul>
-    <p>Ai_Video does not read your other videos, messages, followers or analytics, and does not publish anything on your behalf.</p>
+    <p>Ai_Video does not read your other videos, messages, followers or analytics, and never posts anything you did not approve.</p>
   </div>
 
   <footer>© 2026 Ai_Video · fract.dachahub.online · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms of Service</a></footer>

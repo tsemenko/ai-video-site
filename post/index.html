@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ai_Video — post to TikTok</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .grid { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  video { width: 100%; border-radius: 14px; background: #000; aspect-ratio: 9/16; }
+  .who { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .who img { width: 44px; height: 44px; border-radius: 50%; background: #333; }
+  .who b { color: var(--text); }
+  label.f { display: block; font-weight: 700; margin: 16px 0 6px; color: var(--text); }
+  textarea, select { width: 100%; background: #0b0d11; color: var(--text); border: 1px solid #2a3140; border-radius: 10px; padding: 10px; font: inherit; }
+  textarea { min-height: 90px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted); }
+  .row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .row label.off { opacity: .45; cursor: not-allowed; }
+  .sub { margin: 8px 0 0 26px; }
+  .hint { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+  button.btn { border: 0; cursor: pointer; margin-top: 20px; }
+  button.btn:disabled { opacity: .4; cursor: not-allowed; }
+  #log { font-size: 14px; white-space: pre-line; }
+  a { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="/icon.png" alt="Ai_Video"><a class="brand" href="/">Ai_Video</a>
+    <nav><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav></header>
+
+  <h1>Post to TikTok</h1>
+  <p id="state">Connecting to the Ai_Video uploader on this computer…</p>
+
+  <div class="card" id="form" hidden>
+    <div class="who"><img id="avatar" alt=""><div>Posting as <b id="nick"></b><br><span class="hint" id="limits"></span></div></div>
+    <div class="grid">
+      <div><video id="preview" controls playsinline muted></video><p class="hint" id="file"></p></div>
+      <div>
+        <label class="f" for="title">Caption</label>
+        <textarea id="title" maxlength="2200" placeholder="Write a caption, #hashtags"></textarea>
+
+        <label class="f" for="privacy">Who can view this video</label>
+        <select id="privacy"><option value="" selected disabled>Select privacy level</option></select>
+
+        <label class="f">Allow users to</label>
+        <div class="row">
+          <label id="l-comment"><input type="checkbox" id="comment"> Comment</label>
+          <label id="l-duet"><input type="checkbox" id="duet"> Duet</label>
+          <label id="l-stitch"><input type="checkbox" id="stitch"> Stitch</label>
+        </div>
+
+        <label class="f">Content labels</label>
+        <div class="row"><label><input type="checkbox" id="aigc" checked> AI-generated content</label></div>
+
+        <label class="f">Disclose video content</label>
+        <div class="row"><label><input type="checkbox" id="commercial"> This video promotes a brand, product or service</label></div>
+        <div class="sub" id="brands" hidden>
+          <div class="row"><label><input type="checkbox" id="organic"> Your brand</label></div>
+          <p class="hint">You are promoting yourself or your own business.</p>
+          <div class="row"><label><input type="checkbox" id="branded"> Branded content</label></div>
+          <p class="hint">You are promoting another brand or a third party.</p>
+          <p class="hint" id="label-note"></p>
+        </div>
+
+        <p class="hint" id="consent"></p>
+        <button class="btn" id="post" disabled>Post</button>
+        <p class="hint" id="why"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="progress" hidden><h2 style="margin-top:0" id="ptitle">Posting…</h2><p id="log"></p></div>
+
+  <footer>© 2026 Ai_Video · fract.dachahub.online · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms of Service</a></footer>
+</main>
+<script>
+  // Страница работает только вместе с загрузчиком на этом ПК (tiktok.py post): он открывает её как
+  // /post/?port=8765&key=…, отдаёт данные аккаунта и превью с 127.0.0.1 и сам отправляет видео в TikTok.
+  const q = new URLSearchParams(location.search);
+  const port = /^\d{4,5}$/.test(q.get("port") || "") ? q.get("port") : "8765";
+  const key = q.get("key") || "";
+  const local = (p) => `http://127.0.0.1:${port}${p}${p.includes("?") ? "&" : "?"}key=${encodeURIComponent(key)}`;
+  const $ = (id) => document.getElementById(id);
+  const NAMES = { PUBLIC_TO_EVERYONE: "Everyone", MUTUAL_FOLLOW_FRIENDS: "Friends", FOLLOWER_OF_CREATOR: "Followers", SELF_ONLY: "Only me" };
+  const MUSIC = '<a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Music Usage Confirmation</a>';
+  const BC = '<a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener">Branded Content Policy</a>';
+  let creator = null, tooLong = false;
+
+  function setInteraction(id, disabled) {
+    $(id).disabled = disabled; $("l-" + id).classList.toggle("off", disabled);
+    if (disabled) { $(id).checked = false; $("l-" + id).title = "Turned off in your TikTok settings"; }
+  }
+
+  function refresh() {
+    const com = $("commercial").checked, org = $("organic").checked, br = $("branded").checked;
+    $("brands").hidden = !com;
+    const self = [...$("privacy").options].find(o => o.value === "SELF_ONLY");
+    if (self) {
+      self.disabled = com && br;
+      self.textContent = NAMES.SELF_ONLY + (self.disabled ? " (branded content cannot be private)" : "");
+      if (self.disabled && $("privacy").value === "SELF_ONLY") $("privacy").value = "";
+    }
+    $("label-note").textContent = !com ? "" : br ? "Your video will be labeled as \"Paid partnership\"."
+      : org ? "Your video will be labeled as \"Promotional content\"." : "";
+    $("consent").innerHTML = "By posting, you agree to TikTok's " + (com && br ? BC + " and " : "") + MUSIC + ".";
+    let why = "";
+    if (tooLong) why = "This video is longer than your account allows.";
+    else if (!$("privacy").value) why = "Select who can view this video.";
+    else if (com && !org && !br) why = "You need to indicate if your content promotes yourself, a third party, or both.";
+    $("why").textContent = why;
+    $("post").disabled = !!why;
+  }
+
+  async function start() {
+    let info;
+    try { info = await (await fetch(local("/api/info"))).json(); }
+    catch (e) {
+      $("state").innerHTML = "<span class='err'>The Ai_Video uploader is not running.</span> Start it on your computer — it opens this page for the video you want to post.";
+      return;
+    }
+    creator = info.creator;
+    if (creator.error) {
+      $("state").innerHTML = "<span class='err'>TikTok does not allow posting right now:</span> " + (creator.error.message || creator.error.code) + ". Please try again later.";
+      return;
+    }
+    $("state").textContent = "Review the video and choose how it is posted. Nothing is posted until you press Post.";
+    $("avatar").src = creator.creator_avatar_url || "";
+    $("nick").textContent = (creator.creator_nickname || "") + (creator.creator_username ? " (@" + creator.creator_username + ")" : "");
+    $("limits").textContent = creator.max_video_post_duration_sec ? `Videos up to ${creator.max_video_post_duration_sec} s` : "";
+    $("file").textContent = info.file + (info.duration ? ` · ${Math.round(info.duration)} s` : "");
+    tooLong = !!(info.duration && creator.max_video_post_duration_sec && info.duration > creator.max_video_post_duration_sec);
+    $("preview").src = local("/video");
+    for (const v of creator.privacy_level_options || []) {
+      const o = document.createElement("option"); o.value = v; o.textContent = NAMES[v] || v; $("privacy").append(o);
+    }
+    setInteraction("comment", !!creator.comment_disabled);
+    setInteraction("duet", !!creator.duet_disabled);
+    setInteraction("stitch", !!creator.stitch_disabled);
+    $("form").hidden = false;
+    refresh();
+  }
+
+  ["privacy", "commercial", "organic", "branded"].forEach(id => $(id).addEventListener("change", refresh));
+
+  $("post").addEventListener("click", async () => {
+    $("post").disabled = true;
+    const body = { title: $("title").value, privacy_level: $("privacy").value,
+      allow_comment: $("comment").checked, allow_duet: $("duet").checked, allow_stitch: $("stitch").checked,
+      is_aigc: $("aigc").checked, brand_content: $("commercial").checked && $("branded").checked,
+      brand_organic: $("commercial").checked && $("organic").checked };
+    const r = await fetch(local("/api/post"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { $("why").innerHTML = "<span class='err'>" + (j.error || "Could not start posting") + "</span>"; $("post").disabled = false; return; }
+    $("form").hidden = true; $("progress").hidden = false;
+    $("state").textContent = "Your video is being uploaded to TikTok.";
+    const poll = setInterval(async () => {
+      let s; try { s = await (await fetch(local("/api/status"))).json(); } catch (e) { return; }
+      $("log").textContent = s.log.join("\n");
+      if (s.phase !== "done") return;
+      clearInterval(poll);
+      const st = s.result || {};
+      if (st.status === "PUBLISH_COMPLETE") {
+        $("ptitle").innerHTML = "<span class='ok'>Posted</span>";
+        $("state").textContent = "Done. It may take a few minutes for the video to appear on your profile.";
+      } else if (st.status === "FAILED") {
+        $("ptitle").innerHTML = "<span class='err'>Not posted</span>";
+        $("state").textContent = "TikTok returned: " + (st.fail_reason || "unknown error");
+      } else {
+        $("ptitle").textContent = "Processing";
+        $("state").textContent = "TikTok is still processing the video. It will appear on your profile in a few minutes.";
+      }
+    }, 2000);
+  });
+
+  start();
+</script>
+</body>
+</html>
