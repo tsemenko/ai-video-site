@@ -25,6 +25,7 @@
   button.btn:disabled { opacity: .4; cursor: not-allowed; }
   #log { font-size: 14px; white-space: pre-line; }
   a { color: var(--text); }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -161,7 +162,11 @@
     $("state").textContent = "Your video is being uploaded to TikTok.";
     const poll = setInterval(async () => {
       let s; try { s = await (await fetch(local("/api/status"))).json(); } catch (e) { return; }
-      $("log").textContent = s.log.join("\n");
+      // журнал загрузчика по-русски → короткие английские строки для экрана
+      const STAT = { PROCESSING_UPLOAD: "TikTok is processing the video…", PROCESSING_DOWNLOAD: "TikTok is processing the video…",
+        PUBLISH_COMPLETE: "Published.", FAILED: "Failed." };
+      $("log").textContent = [...new Set(s.log.map(l => l.startsWith("статус: ") ? (STAT[l.slice(8)] || "Status: " + l.slice(8))
+        : l.startsWith("загружаю") ? "Uploading the video file…" : ""))].filter(Boolean).join("\n");
       if (s.phase !== "done") return;
       clearInterval(poll);
       const st = s.result || {};
