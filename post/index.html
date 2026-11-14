@@ -73,7 +73,9 @@
     </div>
   </div>
 
-  <div class="card" id="progress" hidden><h2 style="margin-top:0" id="ptitle">Posting…</h2><p id="log"></p></div>
+  <div class="card" id="progress" hidden><h2 style="margin-top:0" id="ptitle">Posting…</h2><p id="log"></p>
+    <a class="btn" id="profile" href="https://www.tiktok.com/" target="_blank" rel="noopener" hidden>Open my TikTok profile</a>
+    <p class="hint" id="phint" hidden>Videos with “Only me” privacy are visible only to you: open your profile while signed in, they are marked with a lock.</p></div>
 
   <footer>© 2026 Ai_Video · fract.dachahub.online · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms of Service</a></footer>
 </main>
@@ -166,6 +168,10 @@
       if (st.status === "PUBLISH_COMPLETE") {
         $("ptitle").innerHTML = "<span class='ok'>Posted</span>";
         $("state").textContent = "Done. It may take a few minutes for the video to appear on your profile.";
+        const id = (st.publicaly_available_post_id || [])[0];
+        if (creator.creator_username) $("profile").href = "https://www.tiktok.com/@" + creator.creator_username + (id ? "/video/" + id : "");
+        $("profile").hidden = false;
+        $("phint").hidden = $("privacy").value !== "SELF_ONLY";
       } else if (st.status === "FAILED") {
         $("ptitle").innerHTML = "<span class='err'>Not posted</span>";
         $("state").textContent = "TikTok returned: " + (st.fail_reason || "unknown error");
